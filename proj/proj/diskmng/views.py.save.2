@@ -1,0 +1,231 @@
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.template import loader
+import subprocess
+import glob
+
+
+def menu(request):
+    return render(request, 'diskmng/index.html')
+
+def fullinfo(request):
+    c = []
+    c.append('sudo pvdisplay')
+    c.append('sudo vgdisplay')
+    c.append('sudo lvdisplay')
+    c.append('df -hx tmpfs')
+    c.append('mount')
+    c.append('sudo du -shxc --exclude=proc --exclude=dev')
+
+    s = []
+    for i in range(len(c)-1):
+        s.append(makeCommand(c[i]))
+
+    s.append('<table>')
+    for i in s[3]:
+        if i.find('mapper') != -1:
+            path = i.split(' ')
+            list = glob.glob(path[-1] + '/*')
+            res = makeCommand2(c[5], list)
+            for j in res:
+                info = j.replace('\\t', '</td><td>')
+                s[5] = s[5]+'<tr><td>'+info+'</td></tr>'
+    s[5] = s[5]+'</table>'
+
+    for i in range(len(c)):
+        c[i] = c[i].replace('sudo ', '')
+
+    context = {
+        'c': c,
+        's': s
+    }
+
+    return render(request, 'diskmng/fullinfo.html', context)
+
+def info(request):
+    c = []
+    c.append('sudo pvdisplay')
+    c.append('sudo vgdisplay')
+    c.append('sudo lvdisplay')
+    c.append('df -hx tmpfs')
+    c.append('mount')
+    c.append('sudo du -shxc --exclude=proc --exclude=dev')
+
+    res = []
+    for i in range(len(c)-1):
+        res.append(makeCommand(c[i]))
+
+    s = []
+    for i in range(3):
+        s.append('<table>')
+        for j in res[i]:
+            info = str(j)
+            info = replacestr(info)
+            s[i] = s[i]+'<tr><td>'+info+'</td></tr>'
+        s[i] = s[i]+'</table>'
+
+    for i in range(3,5):
+        s.append('<table>')
+        for j in res[i]:
+            info = str(j).replace('Mounted on', 'Mounted_on')
+            info = info.replace('                           ', '</td><td>|</td><td>')
+            info = info.replace('                      ', '</td><td>|</td><td>')
+            info = info.replace('                     ', '</td><td>|</td><td>')
+            info = info.replace('      ', '</td><td>|</td><td>')
+            info = info.replace('     ', '</td><td>|</td><td>')
+            info = info.replace('    ', '</td><td>|</td><td>')
+            info = info.replace('   ', '</td><td>|</td><td>')
+            info = info.replace('  ', '</td><td>|</td><td>')
+            info = info.replace(' ', '</td><td>|</td><td>')
+            s[i] = s[i]+'<tr><td>'+info+'</td></tr>'
+        s[i] = s[i]+'</table>'
+
+    s.append('<table>')
+    for i in res[3]:
+        if i.find('mapper') != -1:
+            path = i.split(' ')
+            list = glob.glob(path[-1]+'/*')
+            r = makeCommand2(c[5], list)
+            for j in r:
+                info = j.replace('\\t', '</td><td>|</td><td>')
+                s[5] = s[5]+'<tr><td>'+info+'</td></tr>'
+    s[5] = s[5]+'</table>'
+    s[5] = s[5].replace('total</td></tr>', 'total</td></tr><tr><td><br></td></tr>')
+
+    for i in range(len(c)):
+        c[i] = c[i].replace('sudo ', '')
+
+    context = {
+        'c': c,
+        's': s
+    }
+
+    return render(request, 'diskmng/info.html', context)
+
+def storage(request):
+    c = []
+    c.append('sudo pvdisplay')
+    c.append('sudo vgdisplay')
+    c.append('sudo lvdisplay')
+    c.append('df -hx tmpfs')
+    c.append('mount')
+    c.append('sudo du -shxc --exclude=proc --exclude=dev')
+
+    res = []
+    for i in range(len(c)-1):
+        res.append(makeCommand(c[i]))
+
+    s = []
+    for i in range(3):
+        s.append(['<table>'])
+        for j in res[i]:
+            info = str(j)
+            info = replacestr(info)
+            if info != '' and info != '   ':
+                s[i].append('<tr><td>'+info+'</td></tr>')
+        s[i].append('</table>')
+
+    s.append('<table>')
+    for i in res[3]:
+        info = str(i).replace('Mounted on', 'Mounted_on')
+        info = info.replace('                           ', '</td><td>|</td><td>')
+        info = info.replace('                      ', '</td><td>|</td><td>')
+        info = info.replace('                     ', '</td><td>|</td><td>')
+        info = info.replace('      ', '</td><td>|</td><td>')
+        info = info.replace('     ', '</td><td>|</td><td>')
+        info = info.replace('    ', '</td><td>|</td><td>')
+        info = info.replace('   ', '</td><td>|</td><td>')
+        info = info.replace('  ', '</td><td>|</td><td>')
+        info = info.replace(' ', '</td><td>|</td><td>')
+        s[3] = s[3]+'<tr><td>'+info+'</td></tr>'
+    s[3] = s[3]+'</table>'
+
+    s.append('<table>')
+    for i in res[4]:
+        if i.find('mapper') != -1:
+            info = str(i).replace(' ', '</td><td>|</td><td>')
+            s[4] = s[4]+'<tr><td>'+info+'</td></tr>'
+    s[4] = s[4]+'</table>'
+
+    s.append('<table>')
+    for i in res[3]:
+        if i.find('mapper') != -1:
+            path = i.split(' ')
+            list = glob.glob(path[-1]+'/*')
+            r = makeCommand2(c[5], list)
+            for j in r:
+                info = j.replace('\\t', '</td><td>|</td><td>')
+                s[5] = s[5]+'<tr><td>'+info+'</td></tr>'
+    s[5] = s[5]+'</table>'
+    s[5] = s[5].replace('total</td></tr>', 'total</td></tr><tr><td><br></td></tr>')
+
+    for i in range(len(c)):
+        c[i] = c[i].replace('sudo ', '')
+
+    s.append('')
+    cont1 = 0
+    cont2 = 0
+    for i in s[0]:
+        if i.find('Allocated PE') != -1:
+            s[6] = s[6]+str(i)
+            cont11 = 1
+            cont1 = cont1+1
+            for j in s[1]:
+                if j.find('table>') != -1:
+                    j = j.replace('</table>','')
+                    j = j.replace('<table>','')
+                if j.find('Free') != -1:
+                    if cont11 == cont1:
+                        s[6] = s[6]+str(j)
+                        for k in s[2]:
+                            if j.find('table>') != -1:
+                                j = j.replace('</table>','')
+                                j = j.replace('<table>','')
+                            if k
+                    cont11 = cont11+1
+                else:
+                    if cont11 == cont1:
+                        s[6] = s[6]+str(j)
+        else:
+            s[6] = s[6]+str(i)
+
+    context = {
+        'c': c,
+        's': s
+    }
+
+    return render(request, 'diskmng/storage.html', context)
+
+def makeCommand(command):
+    c = command.split(' ')
+    s = subprocess.check_output(c)
+
+    t = str(s).replace('b\'', '')
+    t = t.replace('\'', '')
+    res = t.split('\\n')
+
+    return res
+
+def makeCommand2(cstr, clist):
+    c = cstr.split(' ')
+    c = c+clist
+    s = subprocess.check_output(c)
+
+    t = str(s).replace('b\'', '')
+    t = t.replace('\'', '')
+    res = t.split('\\n')
+
+    return res
+
+def replacestr(info):
+    l=['PV Name','VG Name','PV Size','Allocatable','PE Size','Total PE','Free PE','Allocated PE']
+    l=l+['Format','Metadata Areas','Metadata Sequence No','VG Access','VG Status','MAX LV','Cur LV','Open LV','Max PV','Cur PV','Act PV','VG Size','Alloc PE / Size','Free  PE / Size']
+    l=l+['LV Path','LV Name','LV Write Access','LV Creation host, time','LV Status','# open','LV Size','Current LE','Segments','Allocation','Read ahead sectors','- currently set to','Block device']
+    r=['System ID','PV UUID','VG UUID','LV UUID']
+    for i in l:
+        info = info.replace(i, i+'</td><td>|</td><td>')
+    for i in r:
+        if info.find(i) != -1:
+            info = info.replace(info, '')
+
+    return info

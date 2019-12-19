@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ {% load staticfiles %}
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'js/apexcharts.css' %}">
+    <!-- JS -->
+    <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>Storage</title>
+
+    <style>
+        #chart{
+            max-width: 6000px;
+            margin: 35px auto;
+        }
+        th{
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <br>
+    <h2 align="center">{{b}}</h2>
+    <form action='' target='_blank' method="post">
+    {%csrf_token%}
+    {% autoescape off %}{{hdu}}{% endautoescape %}
+    </form>
+    <br>
+    <div id="chart"></div>
+
+    <script src="{% static 'js/apexcharts.min.js' %}"></script>
+
+    <script>
+        var local = '{{b}}';
+        var total = '{{dutotal}}';
+
+        var options = {
+            chart: {
+                height: 600,
+                type: 'radialBar',
+            },
+            plotOptions: {
+                radialBar: {
+                    dataLabels: {
+                        name: {
+                            fontSize: '32px',
+                        },
+                        value: {
+                            fontSize: '25px',
+                        },
+                        total: {
+                            show: true,
+                            label: ""+local,
+                            formatter: function (w) {
+                                // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
+                                return ""+total
+                            }
+                        }
+                    }
+                }
+            },
+            series: [
+                {% for i in du %}
+                    '{{i.0}}',
+                {% endfor %}
+            ],
+            labels: [
+                {% for i in du %}
+                    '{{i.1}}',
+                {% endfor %}
+            ],
+            
+        }
+
+       var chart = new ApexCharts(
+            document.querySelector("#chart"),
+            options
+        );
+        
+        chart.render();
+    </script>
+</body>
+
+</html>

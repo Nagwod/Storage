@@ -1,0 +1,4 @@
+sudo du -shxc --exclude=proc --exclude=dev //srv //cdrom //tmp //run //vmlinuz.old //vmlinuz //root //mnt //bin //exports //etc //initrd.img.old //var //initrd.img //dev //proc //lib64 //snap //media //kdeinit5__0 //photorec.ses //sbin //lost+found //sys //opt //boot //lib //home //usr
+sudo du -shxc --exclude=proc --exclude=dev
+sudo du -shxc --exclude=proc --exclude=dev /exports/atenna/2019.08.17 /exports/atenna/Android /exports/atenna/antigo /exports/atenna/LOST.DIR
+sudo du -shxc --exclude=proc --exclude=dev /exports/adm/lixo.data /exports/adm/CT

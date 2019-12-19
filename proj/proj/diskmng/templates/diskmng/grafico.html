@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+ {% load staticfiles %}
+        <!-- CSS -->
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'js/apexcharts.css' %}">
+        <!-- JS -->
+        <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+        <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Storage</title>
+
+
+
+
+    <style>
+        #chart {
+            max-width: 6000px;
+            margin: 35px auto;
+        }
+    </style>
+</head>
+
+<body>
+    <p><a href="../">Voltar</a></p>
+    <p>{{t}}</p>
+    <p>{{u}}</p>
+
+    <table><tr>
+    <td><div id="chart_2"></div></td>
+    <td><div id="chart_3"></div></td>
+    </tr></table>
+
+    <script src="{% static 'js/apexcharts.min.js' %}"></script>
+
+    <script>
+        var options = {
+            chart: {
+                height: 350,
+                type: 'radialBar',
+            },
+            plotOptions: {
+                radialBar: {
+                    dataLabels: {
+                        name: {
+                            fontSize: '22px',
+                        },
+                        value: {
+                            fontSize: '16px',
+                        },
+                        total: {
+                            show: true,
+                            label: 'fs1_vg1',
+                            formatter: function (w) {
+                                // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
+                                return 14.55
+                            }
+                        }
+                    }
+                }
+            },
+            series: [ {{u.2.0}},{{u.1.0}},{{u.0.0}}],
+            labels: [ 'alloc','free','fs1_vg1'],
+            
+        }
+
+       var chart = new ApexCharts(
+            document.querySelector("#chart_2"),
+            options
+        );
+        
+        chart.render();
+    </script>
+
+    <script>
+        var options = {
+            chart: {
+                height: 350,
+                type: 'radialBar',
+            },
+            plotOptions: {
+                radialBar: {
+                    dataLabels: {
+                        name: {
+                            fontSize: '22px',
+                        },
+                        value: {
+                            fontSize: '16px',
+                        },
+                        total: {
+                            show: true,
+                            label: 'fs1_vg1',
+                            formatter: function (w) {
+                                // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
+                                return 14.55
+                            }
+                        }
+                    }
+                }
+            },
+            series: [ 17,83,100],
+            labels: [ 'alloc111','free111','fs1_vg111'],
+            
+        }
+
+       var chart = new ApexCharts(
+            document.querySelector("#chart_3"),
+            options
+        );
+        
+        chart.render();
+    </script>
+
+    <h2 align="center">Informação</h2>
+    {% autoescape off %}{{h}}{% endautoescape %}
+<!--
+    {% for i in s.6 %}
+        <table align="center">
+        {% for j in s.6.i %}
+            <tr>
+            {% for k in s.6.i.j %}
+                <td>
+                {{s.6.i.j.k}}
+                </td>
+            {% endfor %}
+            </tr>
+        {% endfor %}
+        </table>
+    {% endfor %}
+-->
+<!--
+    <h2>{{ c.0 }}</h2>
+    {% for i in s.0 %}
+        {% autoescape off %} {{ i }} {% endautoescape %}
+    {% endfor %}
+
+    <h2>{{ c.1 }}</h2>
+    {% for i in s.1 %}
+        {% autoescape off %} {{ i }} {% endautoescape %}
+    {% endfor %}
+
+    <h2>{{ c.2 }}</h2>
+    {% for i in s.2 %}
+        {% autoescape off %} {{ i }} {% endautoescape %}
+    {% endfor %}
+
+    <h2>{{ c.3 }}</h2>
+    {% for i in s.3 %}
+        {% autoescape off %} {{ i }} {% endautoescape %}
+    {% endfor %}
+
+    <h2>{{ c.4 }}</h2>
+    {% for i in s.4 %}
+        {% autoescape off %} {{ i }} {% endautoescape %}
+    {% endfor %}
+-->
+    <br>
+    <h2 align="center">{{ c.5 }}</h2>
+    {% autoescape off %}{{ s.7 }}{% endautoescape %}
+
+</body>
+
+</html>

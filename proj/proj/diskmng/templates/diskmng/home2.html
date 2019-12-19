@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+ {% load staticfiles %}
+        <!-- CSS -->
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'js/apexcharts.css' %}">
+        <!-- JS -->
+        <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+        <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Radar with Polygon Fill</title>
+
+
+    
+
+    <style>
+        #chart {
+            max-width: 6000px;
+            margin: 35px auto;
+        }
+    </style>
+</head>
+
+<body> 
+  <h1>{{t}}</h1>
+    <div id="chart">
+
+    </div>
+    
+
+    <script src="{% static 'js/apexcharts.min.js' %}"></script>
+
+    <script>
+        var options = {
+            chart: {
+                height: 500,
+                type: 'radar',
+            },
+            series: [{
+                name: 'Series 100%',
+                //data: [100, 100, 100],
+                data: {{t.0}},
+            },{
+                name: 'Usado %',
+                //data: ['{{t.0.0}}', '{{t.1.0}}', '{{t.2.0}}'],
+                data: {{t.1}},
+            }],
+            //labels: ['{{t.0.1}}', '{{t.1.1}}', '{{t.2.1}}'],
+            labels: {%autoescape off%} {{t.2}} {%endautoescape%},
+            plotOptions: {
+                radar: {
+                    size: 200,
+                    polygons: {
+                        strokeColor: '#e9e9e9',
+                        fill: {
+                            colors: ['#f8f8f8', '#fff']
+                        }
+                    }
+                }
+            },
+            title: {
+                text: 'Radar with Polygon Fill'
+            },
+            colors: ['#6045FF','#FF4560'],
+            markers: {
+                size: 4,
+                colors: ['#fff','#000'],
+                strokeColor: '#FF4560',
+                strokeWidth: 2,
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return val
+                    }   
+                }
+            },
+            yaxis: {
+                tickAmount: 7,
+                labels: {
+                    formatter: function(val, i) {
+                        if(i % 2 === 0) {
+                            return val
+                        } else {
+                            return ''
+                        }
+                    }
+                }
+            }
+        }
+
+        var chart = new ApexCharts(
+            document.querySelector("#chart"),
+            options
+        );
+
+        chart.render();
+       
+
+    </script>
+</body>
+
+</html>

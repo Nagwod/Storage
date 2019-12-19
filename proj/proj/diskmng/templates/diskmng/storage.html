@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ {% load staticfiles %}
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'js/apexcharts.css' %}">
+    <!-- JS -->
+    <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>Storage</title>
+
+    <style>
+        #chart{
+            max-width: 6000px;
+            margin: 35px auto;
+        }
+        th{
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <button type="button"><a href="../">Voltar</a></button>
+
+    <h1 align="center">LV %</h1>
+    <div id="chart"></div>
+    <br><br>
+    <h1 align="center">LV Usage</h1>
+    <div id="chart2"></div>
+    <br><br>
+    <h1 align="center">VG Free/Alloc</h1>
+    <div  id="chart3"></div>
+    <br><br>
+    <h1 align="center">Disk Usage</h1>
+    {% autoescape off %} {{h2}} {% endautoescape %}
+    <br>
+    <h1 align="center">Histórico de Disk Usage</h1>
+    <div  id="chart1000"></div>
+    <br><br>
+
+    <h2 align="center">Informação</h2>
+    {% autoescape off %}{{h}}{% endautoescape %}
+    <br><br>
+    <h2 align="center">{{ com.3 }}</h2>
+    <br>
+    {% autoescape off %}{{ dfcominfo }}{% endautoescape %}
+    <br>
+    <h2 align="center">{{ com.5 }}</h2>
+    <br>
+    <form action='../du/' target='_blank' method="post">
+    {%csrf_token%}
+    {% autoescape off %}{{ ducominfo }}{% endautoescape %}
+    </form>
+    <br>
+    {% autoescape off %}{{du}}{% endautoescape %}
+
+    <script src="{% static 'js/apexcharts.min.js' %}"></script>
+
+    <!-- Grafico 1 -->
+    <script>
+        var options = {
+            chart: {
+                height: 350,
+                type: 'radar',
+            },
+            series: [{
+                name: 'Series 100%',
+                //data: [100, 100, 100],
+                data: {{lvinfo.0}},
+            },{
+                name: 'Usado %',
+                //data: ['{{lvinfo.0.0}}', '{{lvinfo.1.0}}', '{{lvinfo.2.0}}'],
+                data: {{lvinfo.1}},
+            }],
+            //labels: ['{{lvinfo.0.1}}', '{{lvinfo.1.1}}', '{{lvinfo.2.1}}'],
+            labels: {%autoescape off%} {{lvinfo.5}} {%endautoescape%},
+            plotOptions: {
+                radar: {
+                    size: 150,
+                    polygons: {
+                        strokeColor: '#e9e9e9',
+                        fill: {
+                            colors: ['#f8f8f8', '#fff']
+                        }
+                    }
+                }
+            },
+            title: {
+                text: ''
+            },
+            //colors: ['#6045FF','#FF4560'],
+            colors: ['#2980B9','#D35400','#2874A6','#F1C40F','#6045FF'],
+            markers: {
+                size: 4,
+                colors: ['#fff','#000','#fff','#000','#fff'],
+                strokeColor: '#FF4560',
+                strokeWidth: 2,
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return val
+                    }
+                }
+            },
+            yaxis: {
+                tickAmount: 7,
+                labels: {
+                    formatter: function(val, i) {
+                        if(i % 2 === 0) {
+                            return val
+                        } else {
+                            return ''
+                        }
+                    }
+                }
+            }
+        }
+
+        var chart = new ApexCharts(
+            document.querySelector("#chart"),
+            options
+        );
+
+        chart.render();
+
+
+    </script>
+
+    <!-- Grafico 2 -->
+    <script>
+        var options = {
+            chart: {
+                height: 420,
+                type: 'radar',
+            },
+            series: [{
+                name: 'Total',
+                data: {{lvinfo.2}},
+            },{
+                name: 'Livre',
+                data: {{lvinfo.3}},
+            },{
+                name: 'Ocupado',
+                data: {{lvinfo.4}},
+            }],
+            //labels: ['{{lvinfo.0.1}}', '{{lvinfo.1.1}}', '{{lvinfo.2.1}}'],
+            labels: {%autoescape off%} {{lvinfo.5}} {%endautoescape%},
+            plotOptions: {
+                radar: {
+                    size: 180,
+                    polygons: {
+                        strokeColor: '#e9e9e9',
+                        fill: {
+                            colors: ['#f8f8f8', '#fff']
+                        }
+                    }
+                }
+            },
+            title: {
+                text: ''
+            },
+            //colors: ['#6045FF','#FF4560'],
+            colors: ['#2980B9','#33CC33','#D35400','#F1C40F','#6045FF'],
+            markers: {
+                size: 4,
+                colors: ['#fff','#000','#fff','#000','#fff'],
+                strokeColor: '#FF4560',
+                strokeWidth: 2,
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return val
+                    }
+                }
+            },
+            yaxis: {
+                tickAmount: 7,
+                labels: {
+                    formatter: function(val, i) {
+                        if(i % 2 === 0) {
+                            return val
+                        } else {
+                            return ''
+                        }
+                    }
+                }
+            }
+        }
+
+        var chart = new ApexCharts(
+            document.querySelector("#chart2"),
+            options
+        );
+
+        chart.render();
+
+
+    </script>
+
+    <!-- Grafico 3 -->
+    <script>
+        var options = {
+            chart: {
+                height: 350,
+                type: 'donut',
+            },
+            plotOptions: {
+                radialBar: {
+                    dataLabels: {
+                        name: {
+                            fontSize: '22px',
+                        },
+                        value: {
+                            fontSize: '16px',
+                        },
+                        total: {
+                            show: true,
+                            label: 'fs1_vg1',
+                            formatter: function (w) {
+                                // By default this function returns the average of all series. The below is just an example to show the use of custom for$
+                                return vgsize
+                            }
+                        }
+                    }
+                }
+            },
+            series: [ {{vginfo.2.0}},{{vginfo.1.0}} ],
+            labels: [ 'Free','Alloc' ],
+
+        }
+
+       var chart = new ApexCharts(
+            document.querySelector("#chart3"),
+            options
+        );
+
+        chart.render();
+    </script>
+
+    <!-- Grafico a partir de 4 -->
+    <script>
+        var cont = 0;
+        var du = '{{localDu}}';
+        du = du.split("*split*");
+        var total = '{{dutotal2}}';
+        total = total.split("*split*");
+    </script>
+
+    {% for i in duinfo %}
+    <script>
+        var options = {
+            chart: {
+                height: 500,
+                type: 'radialBar',
+            },
+            plotOptions: {
+                radialBar: {
+                    dataLabels: {
+                        name: {
+                            fontSize: '28px',
+                        },
+                        value: {
+                            fontSize: '21px',
+                        },
+                        total: {
+                            show: true,
+                            label: ""+du[cont]+" - "+total[cont],
+                            formatter: function (w) {
+                                // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
+                                return ""
+                            }
+                        }
+                    }
+                }
+            },
+            series: [
+                {% for j in i %}
+                    '{{j.0}}',
+                {% endfor %}
+            ],
+            labels: [
+                {% for j in i %}
+                    '{{j.1}}',
+                {% endfor %}
+            ],
+        }
+
+       var chart = new ApexCharts(
+            document.querySelector("#charts"+cont),
+            options
+        );
+        chart.render();
+        cont++;
+    </script>
+    {% endfor %}
+
+    <script>
+        var options = {
+            chart: {
+                height: 350,
+                type: 'area',
+                zoom: {
+                    enabled: false
+                }
+            },
+            series: [{% for i in duGrafico %}{
+                    name: '{{i.0}}',
+                    data: [{% for j in i.1 %}
+                            {{j}},
+                        {% endfor %}]
+            },{% endfor %}],
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth'
+            },
+            title: {
+                text: '',
+                align: 'left'
+            },
+            grid: {
+                row: {
+                    colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+                    opacity: 0.5
+                },
+            },
+            xaxis: {
+                categories: [
+                    {% for i in duData %}
+                        '{{i}}',
+                    {% endfor %}
+                ],
+            }
+        }
+
+        var chart = new ApexCharts(
+            document.querySelector("#chart1000"),
+            options
+        );
+
+        chart.render();
+    </script>
+</body>
+
+</html>

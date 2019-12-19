@@ -1,0 +1,497 @@
+import subprocess
+import glob
+
+def comandos():
+    c = []
+    c.append('sudo pvdisplay')
+    c.append('sudo vgdisplay')
+    c.append('sudo lvdisplay')
+    c.append('df -hx tmpfs')
+    c.append('mount')
+    c.append('sudo du -shxc --exclude=proc --exclude=dev')
+
+    res = []
+    for i in range(len(c)-1):
+        res.append(makeCommand(c[i]))
+
+    s = []
+    for i in range(3):
+        s.append([])
+        cont = 0
+        for j in res[i]:
+            info = replacestr(str(j))
+            if info != '':
+                if info.find('Physical volume') != -1 or info.find('Volume group') != -1 or info.find('Logical volume') != -1:
+                    cont = cont+1
+                if info.find('VG Name') != -1:
+                    if i == 0:
+                        s[i].insert(2+9*(cont-1), info)
+                    if i == 1:
+                        s[i].insert(2+19*(cont-1), info)
+                    if i == 2:
+                        s[i].insert(2+15*(cont-1), info)
+                else:
+                    s[i].append(info)
+
+    s.append([])
+    for i in res[3]:
+        info = replacestr2(str(i))
+        s[3].append(info)
+
+    s.append([])
+    for i in res[4]:
+        if i.find('/dev/') != -1:
+            info = str(i).replace(' ', '*split*')
+            s[4].append(info)
+
+    localDu = ''
+    s.append([])
+    for i in res[3]:
+        if i.find('/dev/') != -1:
+            path = i.split(' ')
+            localDu = localDu+(path[-1]+'*split*')
+            list = glob.glob(path[-1]+'/*')
+            r = makeCommand2(c[5], list)
+            for j in r:
+                info = j.replace('\\t', '*split*')
+                s[5].append(info)
+
+    for i in range(len(c)):
+        c[i] = c[i].replace('sudo ', '')
+
+    t=[]
+    u=[]
+    s.append([])
+    z = -1
+    for i in s[0]:
+        if i.find('Physical volume') != -1:
+            z = z+1
+            s[6].append([])
+        if i.find('VG Name') != -1:
+            idx_vgi = i.find('*split*')+7
+            vg = i[idx_vgi:]
+        if i.find('Allocated PE') != -1:
+            s[6][z].append(str(i).split('*split*'))
+            cont = 0
+            for j in s[1]:
+                if j.find(vg) != -1 and cont == 0:
+                    cont = 1
+                    s[6][z].append(['--- Volume group ---'])
+                if cont > 0:
+                    if j.find('VG Size') != -1 or j.find('Alloc PE / Size') != -1 or j.find('FreePE / Size') != -1:
+                        idx = str(j).find('*split*')+7
+                        aux = (j[idx:])
+                        u.append(aux)
+                    if j.find('Free') != -1:
+                        s[6][z].append(str(j).split('*split*'))
+                        cont = cont-1
+                        cont2 = 0
+                        for k in s[2]:
+                            if k.find(vg) != -1 and cont2 == 0:
+                                cont2 = 1
+                                s[6][z].append(['--- Logical volume ---'])
+                            if cont2 > 0:
+                                if k.find('LV Path') != -1:
+                                    lv_vgi = k.find('*split*')+12
+                                    lv = k[lv_vgi:]
+                                    lv = lv.replace('-', '--')
+                                    lv = lv.replace('/', '-')
+                                if k.find('Block') != -1:
+                                    s[6][z].append(str(k).split('*split*'))
+                                    cont2 = cont2-1
+                                    for l in s[3]:
+                                        if l.find('Filesystem') != -1:
+                                            s[6][z].append(str(l).split('*split*'))
+                                        if l.find(lv) != -1:
+                                            idxi = str(l).find('*split*')+7
+                                            aux = (l[idxi:])
+                                            t.append(aux.split('*split*'))
+                                            for m in s[4]:
+                                                if m.find(lv) != -1:
+                                                    idx = str(m).rfind('type')
+                                                    s[6][z].append((str(l)+'*split*'+str(m[idx:])).split('*split*'))
+                                else:
+                                    s[6][z].append(str(k).split('*split*'))
+                    else:
+                        s[6][z].append(str(j).split('*split*'))
+        else:
+            s[6][z].append(str(i).split('*split*'))
+
+    s.append('<table border="1" align="center">')
+    for i in s[3]:
+        s[7] = s[7]+('<tr><td>')
+        s[7] = s[7]+(i.replace('*split*', '</td><td>'))
+        s[7] = s[7]+('</td></tr>')
+    s[7] = s[7]+('</table><br>')
+    s[7] = s[7].replace('<tr><td></td></tr>', '')
+    s[7] = s[7].replace('<td>Filesystem', '<th align="center">Filesystem</th>')
+    s[7] = s[7].replace('<td>Size</td>', '<th align="center">Size</th>')
+    s[7] = s[7].replace('<td>Used</td>', '<th align="center">Used</th>')
+    s[7] = s[7].replace('<td>Avail</td>', '<th align="center">Avail</th>')
+    s[7] = s[7].replace('<td>Use%</td>', '<th align="center">Use%</th>')
+    s[7] = s[7].replace('<td>Mounted_on</td>', '<th align="center">Mounted on</th>')
+
+    v = []
+    v.append([])
+    cont = 0
+    ultimo = False
+    s.append('<table border="1" align="center">')
+    print(s[5])
+    for i in s[5]:
+        if i != '':
+            if ultimo:
+                v.append([])
+                ultimo = False
+            v[cont].append(i.split('*split*'))
+        if i.find('total') != -1:
+            cont = cont+1
+            ultimo = True
+        s[8] = s[8]+('<tr><td>')
+        s[8] = s[8]+(i.replace('*split*', '</td><td>'))
+        s[8] = s[8]+('</td></tr>')
+    s[8] = s[8].replace('total</td></tr><tr><td>', 'total</td></tr></table><br><table border="1" align="center">')
+    s[8] = s[8]+('</table>')
+
+    h = ''
+    for i in range(len(s[6])):
+        for j in range(len(s[6][i])):
+            h = h+'<tr>'
+            for k in range(len(s[6][i][j])):
+                h = h+'<td>'+s[6][i][j][k]+'</td>'
+            h = h+'</tr>'
+    h = h.replace('<tr><td>--- Physical volume ---</td>','</table><br><table border="1" align="center"><tr><th colspan="2" align="center">--- Physical volume ---</th>')
+    h = h.replace('<tr><td>--- Volume group ---</td>','</table><br><table border="1" align="center"><tr><th colspan="2" align="center">--- Volume group ---</th>')
+    h = h.replace('<tr><td>--- Logical volume ---</td>','</table><br><table border="1" align="center"><tr><th colspan="2" align="center">--- Logical volume ---</th>')
+    h = h.replace('<tr><td>Filesystem</td>','</table><br><table border="1" align="center"><tr><th>Filesystem</th>')
+    h = h.replace('<td>Size</td>', '<th>Size</th>')
+    h = h.replace('<td>Used</td>', '<th>Used</th>')
+    h = h.replace('<td>Avail</td>', '<th>Avail</th>')
+    h = h.replace('<td>Use%</td>', '<th>Use%</th>')
+    h = h.replace('<td>Mounted_on</td>', '<th>Mounted on</th>')
+    h = h[:-133]
+
+    h2 = '<table align="center" width="1000">'
+    vlen = range(len(v))
+    for i in range(len(v)):
+        if i%2 == 0:
+            h2 = h2+'<tr><td width="50%"><div id="charts'+ str(i) +'"></div></td>'
+        else:
+            h2 = h2+'<td><div id="charts'+ str(i) +'"></div></td></tr>'
+    h2 = h2+'</table>'
+
+    t = formatT(t)
+    u = formatU(u)
+    v = formatV(v)
+    vtotal = []
+    vtotal = formatVtotal(v)
+    v = formatV2(v, vtotal)
+    vtotal2 = formatVtotal2(vtotal)
+
+    context = {
+        'h': h,
+        'h2': h2,
+        'c': c,
+        's': s,
+        't': t,
+        'u': u,
+        'v': v,
+        'vtotal': vtotal2,
+        'localDu': localDu
+    }
+
+    return context
+
+def formatT(t):
+    aux=[]
+    total=[]
+    usado=[]
+    livre=[]
+    prcnt=[]
+    local=[]
+    new_t=[]
+    for i in t:
+        for j in range(0,3):
+            if i[j].find('K') != -1:
+                i[j] = i[j].replace('K', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])/10000000)
+                else:
+                    i[j] = str(int(i[j])/1000000)
+            if i[j].find('M') != -1:
+                i[j] = i[j].replace('M', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])/10000)
+                else:
+                    i[j] = str(int(i[j])/1000)
+            if i[j].find('G') != -1:
+                i[j] = i[j].replace('G', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])/10)
+                else:
+                    i[j] = str(int(i[j]))
+            if i[j].find('T') != -1:
+                i[j] = i[j].replace('T', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])*100)
+                else:
+                    i[j] = str(int(i[j])*1000)
+            if i[j].find('P') != -1:
+                i[j] = i[j].replace('P', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])*100000)
+                else:
+                    i[j] = str(int(i[j])*1000000)
+        aux.append(100)
+        total.append(float(i[0]))
+        usado.append(float(i[1]))
+        livre.append(float(i[2]))
+        prcnt.append(int(i[3].replace('%', '')))
+        local.append(i[4])
+    #new_t.append(aux)
+    #new_t.append(total)
+    #new_t.append(usado)
+    #new_t.append(livre)
+    #new_t.append(prcnt)
+    #new_t.append(local)
+    new_t.append(aux)
+    new_t.append(prcnt)
+    new_t.append(total)
+    new_t.append(livre)
+    new_t.append(usado)
+    new_t.append(local)
+
+    return new_t
+
+def formatU(u):
+    aux_u = []
+    cont = 0
+    cont2= 0
+    for i in range(len(u)):
+        if cont == 0:
+            aux_u.append([])
+        aux_u[cont2].append(u[i])
+        cont = cont+1
+        if cont == 3:
+            cont = 0
+            cont2 = cont2+1
+
+    total=[]
+    usado=[]
+    livre=[]
+    new_u=[]
+    for i in aux_u:
+        for j in range(0,3):
+            if i[j].find('/') != -1:
+                idx = i[j].rfind('/')+2
+                i[j] = i[j][idx:]
+                i[j] = i[j].replace('<','')
+            if i[j].find('KiB') != -1:
+                i[j] = i[j].replace('KiB', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])/10000000)
+                else:
+                    i[j] = str(int(i[j])/1000000)
+            if i[j].find('MiB') != -1:
+                i[j] = i[j].replace('MiB', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])/10000)
+                else:
+                    i[j] = str(int(i[j])/1000)
+            if i[j].find('GiB') != -1:
+                i[j] = i[j].replace('GiB', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])/10)
+                else:
+                    i[j] = str(int(i[j]))
+            if i[j].find('TiB') != -1:
+                i[j] = i[j].replace('TiB', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])*100)
+                else:
+                    i[j] = str(int(i[j])*1000)
+            if i[j].find('PiB') != -1:
+                i[j] = i[j].replace('PiB', '')
+                if i[j].find(',') != -1:
+                    i[j] = i[j].replace(',', '')
+                    i[j] = str(int(i[j])*100000)
+                else:
+                    i[j] = str(int(i[j])*1000000)
+
+        total.append(round(float(i[0])/float(i[0])*100))
+        usado.append(round(float(i[1])/float(i[0])*100))
+        livre.append(round(float(i[2])/float(i[0])*100))
+    new_u.append(total)
+    new_u.append(usado)
+    new_u.append(livre)
+
+    return new_u
+
+def formatV(v):
+    for i in range(len(v)):
+        for j in range(len(v[i])):
+            for k in range(len(v[i][j])):
+                if v[i][j][k].find('K') != -1:
+                    v[i][j][k] = v[i][j][k].replace('K', '')
+                    if v[i][j][k].find(',') != -1:
+                        v[i][j][k] = v[i][j][k].replace(',', '')
+                        v[i][j][k] = str(float(v[i][j][k])/10000)
+                    else:
+                        v[i][j][k] = str(float(v[i][j][k])/1000)
+                if v[i][j][k].find('M') != -1:
+                    v[i][j][k] = v[i][j][k].replace('M', '')
+                    if v[i][j][k].find(',') != -1:
+                        v[i][j][k] = v[i][j][k].replace(',', '')
+                        v[i][j][k] = str(float(v[i][j][k])/10)
+                    else:
+                        v[i][j][k] = str(float(v[i][j][k]))
+                if v[i][j][k].find('G') != -1:
+                    v[i][j][k] = v[i][j][k].replace('G', '')
+                    if v[i][j][k].find(',') != -1:
+                        v[i][j][k] = v[i][j][k].replace(',', '')
+                        v[i][j][k] = str(float(v[i][j][k])*100)
+                    else:
+                        v[i][j][k] = str(float(v[i][j][k])*1000)
+                if v[i][j][k].find('T') != -1 and v[i][j][k].find('LOST') == -1:
+                    v[i][j][k] = v[i][j][k].replace('T', '')
+                    if v[i][j][k].find(',') != -1:
+                        v[i][j][k] = v[i][j][k].replace(',', '')
+                        v[i][j][k] = str(float(v[i][j][k])*100000)
+                    else:
+                        v[i][j][k] = str(float(v[i][j][k])*1000000)
+
+    return v
+
+def formatV2(v, vtotal):
+    new_v = []
+    cont = 0
+    cont2 = 0
+    aux = 0
+    for i in range(len(v)):
+        new_v.append([])
+        for j in range(len(v[i])):
+            if v[i][j][1].find('total')!=-1:
+                if cont2 > 0:
+                    new_v[i].append([aux, 'outros'])
+                    cont2 = 0
+                aux = 0
+            else:
+                v[i][j][0] = round(float(v[i][j][0])/float(vtotal[cont])*100, 2)
+                if v[i][j][0] < 1:
+                    aux = aux + v[i][j][0]
+                    cont2 = cont2+1
+                else:
+                    new_v[i].append(v[i][j])
+        cont = cont+1
+
+    return new_v
+
+def formatVtotal(v):
+    vtotal = []
+    cont = 0
+    for i in v:
+        vtotal.append([])
+        for j in i:
+            vtotal[cont] = j[0]
+        cont = cont+1
+
+    return vtotal
+
+def formatVtotal2(vtotal):
+    vtotal2 = ""
+    for i in vtotal:
+        vtotal2 = vtotal2+i+' MB*split*'
+
+    return vtotal2
+
+def makeCommand(command):
+    c = command.split(' ')
+    s = subprocess.check_output(c)
+
+    t = str(s).replace('b\'', '')
+    t = t.replace('\'', '')
+    res = t.split('\\n')
+
+    return res
+
+def makeCommand2(cstr, clist):
+    c = cstr.split(' ')
+    c = c+clist
+    s = subprocess.check_output(c)
+
+    t = str(s).replace('b\'', '')
+    t = t.replace('\'', '')
+    res = t.split('\\n')
+
+    return res
+
+def replacestr(info):
+    l=['PV Name','VG Name','PV Size','Allocatable','PE Size','Total PE','Free PE','Allocated PE']
+    l=l+['Format','Metadata Areas','Metadata Sequence No','VG Access','VG Status','MAX LV','Cur LV','Open LV','Max PV','Cur PV','Act PV','VG Size','Alloc PE / Size','FreePE / Size']
+    l=l+['LV Path','LV Name','LV Write Access','LV Creation host, time','LV Status','# open','LV Size','Current LE','Segments','Allocation','Read ahead sectors','- currently set to','Block device']
+    r=['System ID','PV UUID','VG UUID','LV UUID']
+    info = info.replace('                    ', '')
+    info = info.replace('                   ', '')
+    info = info.replace('                  ', '')
+    info = info.replace('                 ', '')
+    info = info.replace('                ', '')
+    info = info.replace('               ', '')
+    info = info.replace('              ', '')
+    info = info.replace('             ', '')
+    info = info.replace('            ', '')
+    info = info.replace('           ', '')
+    info = info.replace('          ', '')
+    info = info.replace('         ', '')
+    info = info.replace('        ', '')
+    info = info.replace('       ', '')
+    info = info.replace('      ', '')
+    info = info.replace('     ', '')
+    info = info.replace('    ', '')
+    info = info.replace('   ', '')
+    info = info.replace('  ', '')
+    for i in l:
+        info = info.replace(i, i+'*split*')
+    for i in r:
+        if info.find(i) != -1:
+            info = info.replace(info, '')
+
+    return info
+
+def replacestr2(info):
+    info = info.replace('Mounted on', 'Mounted_on')
+    info = info.replace('                           ', '*split*')
+    info = info.replace('                          ', '*split*')
+    info = info.replace('                         ', '*split*')
+    info = info.replace('                        ', '*split*')
+    info = info.replace('                       ', '*split*')
+    info = info.replace('                      ', '*split*')
+    info = info.replace('                     ', '*split*')
+    info = info.replace('                    ', '*split*')
+    info = info.replace('                   ', '*split*')
+    info = info.replace('                  ', '*split*')
+    info = info.replace('                 ', '*split*')
+    info = info.replace('                ', '*split*')
+    info = info.replace('               ', '*split*')
+    info = info.replace('              ', '*split*')
+    info = info.replace('             ', '*split*')
+    info = info.replace('            ', '*split*')
+    info = info.replace('           ', '*split*')
+    info = info.replace('          ', '*split*')
+    info = info.replace('         ', '*split*')
+    info = info.replace('        ', '*split*')
+    info = info.replace('       ', '*split*')
+    info = info.replace('      ', '*split*')
+    info = info.replace('     ', '*split*')
+    info = info.replace('    ', '*split*')
+    info = info.replace('   ', '*split*')
+    info = info.replace('  ', '*split*')
+    info = info.replace(' ', '*split*')
+    return info
